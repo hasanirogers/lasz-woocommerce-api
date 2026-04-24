@@ -16,5 +16,5 @@ jobs:
           username: ${{ secrets.FTP_DEPLOY_USERNAME_DEV }}
           password: ${{ secrets.FTP_DEPLOY_PASSWORD_DEV }}
           port: ${{ secrets.FTP_DEPLOY_PORT_DEV }}
-          local-dir: "./themes/lasz-woocommerce/"
+          local-dir: "./lasz-woocommerce/"
           server-dir: "./wp-content/themes/lasz-woocommerce/"
