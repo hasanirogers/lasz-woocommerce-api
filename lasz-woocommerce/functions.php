@@ -86,6 +86,9 @@ if (!class_exists('lasz_woocommerce\Theme')) {
 
       // add theme support for post thumbnails
       add_action('after_setup_theme', array($this, 'add_post_thumbnail_support'));
+
+      // add woocommerce store api checkout update order from request
+      add_action('woocommerce_store_api_checkout_update_order_from_request', array($this, 'woocommerce_payment_fix'), 10, 2);
     }
 
     public static function add_post_thumbnail_support()
@@ -150,6 +153,20 @@ if (!class_exists('lasz_woocommerce\Theme')) {
 
     public static function add_woo_support() {
       add_theme_support('woocommerce');
+    }
+
+    public static function woocommerce_payment_fix($order, $request) {
+      $payment_data = $request['payment_data'] ?? [];
+
+      foreach ( $payment_data as $data ) {
+          if ( in_array( $data['key'], ['stripe_payment_method', 'wc-stripe-payment-method'] ) ) {
+              // Force the ID into the POST global where the Stripe gateway checks for it
+              $_POST['stripe_payment_method'] = sanitize_text_field( $data['value'] );
+          }
+          if ( in_array( $data['key'], ['wc-stripe-payment-type', 'stripe_payment_type'] ) ) {
+              $_POST['wc-stripe-payment-type'] = sanitize_text_field( $data['value'] );
+          }
+      }
     }
   }
 }
