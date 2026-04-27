@@ -88,7 +88,8 @@ if (!class_exists('lasz_woocommerce\Theme')) {
       add_action('after_setup_theme', array($this, 'add_post_thumbnail_support'));
 
       // add woocommerce store api checkout update order from request
-      add_action('woocommerce_store_api_checkout_update_order_from_request', array($this, 'woocommerce_payment_fix'), 10, 2);
+      // add_action('woocommerce_store_api_checkout_update_order_from_request', array($this, 'woocommerce_payment_fix'), 10, 2);
+
     }
 
     public static function add_post_thumbnail_support()
@@ -155,18 +156,47 @@ if (!class_exists('lasz_woocommerce\Theme')) {
       add_theme_support('woocommerce');
     }
 
-    public static function woocommerce_payment_fix($order, $request) {
-      $payment_data = $request['payment_data'] ?? [];
+    // public static function woocommerce_payment_fix($order, $request) {
+    //   $payment_data = $request['payment_data'] ?? [];
 
-      foreach ( $payment_data as $data ) {
-          if ( in_array( $data['key'], ['stripe_payment_method', 'wc-stripe-payment-method'] ) ) {
-              // Force the ID into the POST global where the Stripe gateway checks for it
-              $_POST['stripe_payment_method'] = sanitize_text_field( $data['value'] );
-          }
-          if ( in_array( $data['key'], ['wc-stripe-payment-type', 'stripe_payment_type'] ) ) {
-              $_POST['wc-stripe-payment-type'] = sanitize_text_field( $data['value'] );
-          }
+    //   foreach ( $payment_data as $data ) {
+    //       if ( in_array( $data['key'], ['stripe_payment_method', 'wc-stripe-payment-method'] ) ) {
+    //           // Force the ID into the POST global where the Stripe gateway checks for it
+    //           $_POST['stripe_payment_method'] = sanitize_text_field( $data['value'] );
+    //       }
+    //       if ( in_array( $data['key'], ['wc-stripe-payment-type', 'stripe_payment_type'] ) ) {
+    //           $_POST['wc-stripe-payment-type'] = sanitize_text_field( $data['value'] );
+    //       }
+    //   }
+    // }
+
+
+    public static function redirect_to_new_domain_except_api() {
+      // 1. Check if it's a standard WordPress REST API request
+      if (defined('REST_REQUEST') && REST_REQUEST) {
+        return;
       }
+
+      // 2. Check the URI for WooCommerce specific API endpoints (Legacy and Store API)
+      $request_uri = $_SERVER['REQUEST_URI'];
+      $exclude_paths = [
+        '/wp-json/',      // General REST API path
+        '/wc-api/',       // Legacy WooCommerce API
+        '/wc-auth/',      // WooCommerce Auth
+      ];
+
+      foreach ($exclude_paths as $path) {
+        if (str_contains($request_uri, $path)) {
+          return;
+        }
+      }
+
+      // 3. If it's a normal visitor request, perform the redirect
+      $new_domain = 'https://temp.com';
+      $destination = $new_domain . $request_uri;
+
+      wp_redirect($destination, 301);
+      exit;
     }
   }
 }
